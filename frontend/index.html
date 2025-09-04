@@ -1,0 +1,175 @@
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .choice-form {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      width: 100%;
+      height: 200px;
+      background: black;
+      opacity: 0.8;
+    }
+
+    .choice-question {
+      color: white;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .choice-question-title {
+      color: white;
+
+      font-size: 32px;
+      font-weight: 700;
+      font-style: bold;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .choice-container {
+      color: black;
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      padding: 8px 10%;
+      margin-bottom: 32px;
+    }
+
+    .choice-button {
+      background-color: orange;
+      width: 46%;
+      height: 50px;
+      border-radius: 8px;
+      font-size: 16px;
+      margin: 0 4%;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<script>
+  window.addEventListener("load", () => {
+    const getOptions = () => {
+      return [
+        "Кошки", "Собаки", "Мыши"
+      ]
+    }
+
+    const DISPLAY_STATE = Object.freeze({
+      FIRST: "FIRST",
+      SECOND: "SECOND"
+    })
+
+    const FORM_ID = Object.freeze({
+      FIRST: "select-form",
+      SECOND: "submit-form"
+    })
+
+    const getStateSwitcher = () => {
+      let activeState = DISPLAY_STATE.FIRST;
+      const unhide = (id) => {
+        const element = document.getElementById(id)
+        console.log(id, element)
+        element.classList.remove("hidden")
+      }
+
+      const hide = (id) => {
+        const element = document.getElementById(id)
+        element.className += " hidden";
+      }
+
+      const switchState = (state) => {
+        activeState = state;
+        console.log(state)
+        switch (activeState) {
+          case DISPLAY_STATE.FIRST:
+            hide(FORM_ID.SECOND);
+            unhide(FORM_ID.FIRST);
+            return;
+
+          case DISPLAY_STATE.SECOND:
+            hide(FORM_ID.FIRST);
+            createSubmitForm();
+            unhide(FORM_ID.SECOND);
+            return;
+        }
+      }
+
+      const switchToSecondForm = () => {
+        switchState(DISPLAY_STATE.SECOND);
+      }
+
+      return {
+        activeState,
+        switchState: switchToSecondForm
+      }
+    }
+
+    const addButtonsToContainer = (options, containerID, onClickHandler) => {
+      const buttonContainer = document.getElementById(containerID);
+      console.log(buttonContainer, containerID)
+
+      options.forEach((option) => {
+        const button = document.createElement('button')
+        button.className = "choice-button";
+        button.innerText = option
+        button.onclick = () => onClickHandler(option);
+        buttonContainer.appendChild(button);
+      })
+    }
+
+    const sendAnswer = (answer) => {
+      const API_URL = 'http://localhost:8000/api/answers'
+
+      fetch(API_URL, {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ answer: answer })
+      })
+    }
+    const { switchState, activateState } = getStateSwitcher();
+
+    const createSubmitForm = () => {
+      const options = getOptions();
+
+      addButtonsToContainer(options, 'submit-form-choices', sendAnswer)
+    }
+
+    const createChoiceForm = () => {
+      const options = ["Женщина", "Мужчина"]
+      console.log('called')
+      addButtonsToContainer(options, 'select-form-choices', switchState)
+    }
+
+    createChoiceForm();
+  })
+</script>
+
+<div id="select-form" class="choice-form">
+  <div class="choice-question-title">
+    <p>Какого Вы пола?</p>
+  </div>
+  <div id="select-form-choices" class="choice-container">
+  </div>
+</div>
+
+<div id="submit-form" class="choice-form hidden">
+  <div class="choice-question-title">
+    <p>Что Вам нравится?</p>
+  </div>
+  <div id="submit-form-choices" class="choice-container">
+  </div>
+</div>
